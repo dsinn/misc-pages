@@ -86,17 +86,17 @@ This is actually a collection of similar pages, but I don't remember the backsto
 * **Year Created:** 2011/12
 * **Backstory:** In the final year of my undergraduate studies, I took the [Combinatorial Methods](https://artsci.calendar.utoronto.ca/course/apm461h1) course taught by [Professor Tanny](https://www.mathematics.utoronto.ca/people/directories/all-faculty/steve-tanny).
 
-### [APM461_A1Q8.html](https://dsinn.github.io/misc-pages/APM461_A1Q8.html)
+#### [APM461_A1Q8.html](https://dsinn.github.io/misc-pages/APM461_A1Q8.html)
 
 * **Purpose:** To show all 24 non-isomorphic complete graphs on 6 vertices with two edge colourings.
 * **Backstory:** Evidently based on the filename, this was for the 8th question of the first assignment, but I don't remember what that was. Based on the source code, I'm fairly certain that I used a (now lost) script to generate the canvas code.
 
-### [NE_lattice.html](https://dsinn.github.io/misc-pages/NE_lattice.html)
+#### [NE_lattice.html](https://dsinn.github.io/misc-pages/NE_lattice.html)
 
 * **Purpose:** To show...something about a monotone northeast lattice path (I forgor 💀).
 * **Backstory:** I have a maths degree, so this is probably related to one of the courses.
 
-### [CoinRows.html](https://dsinn.github.io/misc-pages/CoinRows.html)
+#### [CoinRows.html](https://dsinn.github.io/misc-pages/CoinRows.html)
 
 * **Purpose:** To visually show all [integer partitions](https://en.wikipedia.org/wiki/Integer_partition) of 7.
 * **Backstory:** Based on the filename and visuals, the problem was probably presented along the lines of you possessing 7 coins, and having to "stack" them such that each coin on the row above is slotted in the space between two other coins, with no overlapping coins.
