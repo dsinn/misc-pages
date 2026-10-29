@@ -147,3 +147,9 @@ This is actually a collection of similar pages, but I don't remember the backsto
 * **Year Created:** 2026
 * **Purpose:** An implementation of the [lilac chaser](https://en.wikipedia.org/wiki/Lilac_chaser) with customizable sliders.
 * **Backstory:** While I'd known about this optical illusion for possibly more than two decades and vaguely remembered implementing it at some point, I saw that it was missing from this repo, so I had an LLM do the heavy lifting.
+
+### [braille_digits_trainer.html](https://dsinn.github.io/misc-pages/braille_digits_trainer.html)
+
+* **Year Created:** 2026
+* **Purpose:** To help learn the digits of [Braille](https://en.wikipedia.org/wiki/Braille).
+* **Backstory:** I picked up _[BOMBANANA!](https://store.steampowered.com/app/4656000/BOMBANANA/)_, and the ability to read Braille benefits both the blind monkey and (my specialty) the deaf monkey. This was written by Gemini in a free conversation that lasted minutes.
