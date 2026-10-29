@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Braille Digits Trainer</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://w3.org' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231E1E1E'/%3E%3Ccircle cx='65' cy='30' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='65' cy='50' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='65' cy='70' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='35' cy='70' r='11' fill='%23FFFFFF'/%3E%3C/svg%3E">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .braille-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            width: fit-content;
+        }
+        .dot {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            transition: background-color 0.15s ease;
+        }
+        .dot-active {
+            background-color: #111827;
+        }
+        .dot-inactive {
+            background-color: #E5E7EB;
+        }
+        details[open] summary svg {
+            transform: rotate(180deg);
+        }
+        /* Custom smooth background animation for feedback flash */
+        #interactive-window {
+            transition: background-color 0.15s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800 flex flex-col antialiased">
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-xl flex flex-col justify-center">
+        <!-- Main Interactive Card -->
+        <div class="bg-white shadow-md rounded-2xl p-6 md:p-8 border border-gray-100 w-full">
+            <h1 class="text-2xl font-bold text-center text-gray-900 mb-6">Braille Digits Trainer</h1>
+
+            <!-- Statistics Banner -->
+            <div class="grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-4 text-center mb-8 border border-gray-100">
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Correct</div>
+                    <div id="correct-count" class="text-xl font-bold mt-1" style="color: #1A56DB;">0</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Incorrect</div>
+                    <div id="incorrect-count" class="text-xl font-bold text-rose-600 mt-1">0</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Accuracy</div>
+                    <div id="accuracy-percent" class="text-xl font-bold mt-1 transition-colors duration-200">--</div>
+                </div>
+            </div>
+
+            <!-- Configuration Options -->
+            <div class="flex items-center justify-between mb-8 px-1">
+                <div class="flex items-center space-x-2 text-gray-600 font-medium bg-gray-100 px-3 py-1.5 rounded-lg text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="timer-display">0:00</span>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer select-none">
+                        <input type="checkbox" id="include-zero" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>Include "0"</span>
+                    </label>
+                    <label class="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer select-none">
+                        <input type="checkbox" id="mute-sound" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>Mute Sound</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="interactive-window" class="flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-200 rounded-2xl py-10 mb-6 min-h-[180px]">
+                <div class="flex flex-col items-center">
+                    <span class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Digit Symbol</span>
+                    <div id="braille-target-container" class="inline-block p-3 bg-white rounded-xl shadow-xs border border-gray-200 ring-4 ring-gray-50">
+                        <!-- Injected programmatically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 relative">
+                <input
+                    type="text"
+                    id="digit-input"
+                    maxlength="1"
+                    placeholder="Type the number here..."
+                    class="w-full text-center text-lg font-medium bg-white border border-gray-300 rounded-xl py-3 px-4 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400"
+                    autofocus
+                    autocomplete="off"
+                >
+                <div id="error-message" class="hidden text-sm text-rose-600 text-center mt-2.5 font-medium animate-pulse"></div>
+            </div>
+
+            <button
+                id="reset-btn"
+                class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl py-2.5 transition-colors text-sm shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+            >
+                Reset Progress & Timer
+            </button>
+        </div>
+
+        <!-- Collapsible Reference Footer -->
+        <details class="mt-6 bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden transition-all duration-300 group">
+            <summary class="flex items-center justify-between px-5 py-4 cursor-pointer font-semibold text-gray-700 bg-gray-50/50 hover:bg-gray-50 select-none list-none">
+                <span class="flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span>Braille Digits Reference</span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </summary>
+
+            <div class="p-5 border-t border-gray-100 bg-white grid grid-cols-5 gap-4 justify-items-center">
+                <div id="reference-panel-grid" class="contents"></div>
+            </div>
+        </details>
+    </main>
+
+    <footer class="text-center py-4 text-xs text-gray-400 font-medium">
+        Standard Literary Braille Number Conventions (A-J mapping)
+    </footer>
+
+    <script>
+        // Core Mathematical Configuration Matrices: Mapping standard literary A-J Braille schemas
+        // 1=A [1], 2=B [1,2], 3=C [1,4], 4=D [1,4,5], 5=E [1,5], 6=F [1,2,4], 7=G [1,2,4,5], 8=H [1,2,5], 9=I [2,4], 0=J [2,4,5]
+        const BRAILLE_MAP = {
+            "1": [true, false, false, false, false, false],
+            "2": [true, false, true, false, false, false],
+            "3": [true, true, false, false, false, false],
+            "4": [true, true, false, true, false, false],
+            "5": [true, false, false, true, false, false],
+            "6": [true, true, true, false, false, false],
+            "7": [true, true, true, true, false, false],
+            "8": [true, false, true, true, false, false],
+            "9": [false, true, true, false, false, false],
+            "0": [false, true, true, true, false, false]
+        };
+
+        // UI State Variables
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let activeDigit = "";
+        let startTime = Date.now();
+        let timerInterval = null;
+
+        // Elements
+        const correctDisplay = document.getElementById('correct-count');
+        const incorrectDisplay = document.getElementById('incorrect-count');
+        const accuracyDisplay = document.getElementById('accuracy-percent');
+        const timerDisplay = document.getElementById('timer-display');
+        const includeZeroCheck = document.getElementById('include-zero');
+        const muteSoundCheck = document.getElementById('mute-sound');
+        const targetContainer = document.getElementById('braille-target-container');
+        const interactiveWindow = document.getElementById('interactive-window');
+        const digitInput = document.getElementById('digit-input');
+        const errorMessage = document.getElementById('error-message');
+        const resetBtn = document.getElementById('reset-btn');
+        const referencePanelGrid = document.getElementById('reference-panel-grid');
+
+        // Web Audio API Synthesizer Pipeline
+        function playFeedbackSound(isCorrect) {
+            if (muteSoundCheck.checked) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                if (isCorrect) {
+                    // Crisp arpeggio chime for correct answer
+                    const now = ctx.currentTime;
+
+                    const osc1 = ctx.createOscillator();
+                    const gain1 = ctx.createGain();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(587.33, now); // D5
+                    gain1.gain.setValueAtTime(0.08, now);
+                    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc1.connect(gain1);
+                    gain1.connect(ctx.destination);
+                    osc1.start(now);
+                    osc1.stop(now + 0.1);
+
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(880.00, now + 0.06); // A5
+                    gain2.gain.setValueAtTime(0.08, now + 0.06);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.start(now + 0.06);
+                    osc2.stop(now + 0.2);
+                } else {
+                    // Short low frequency buzzer sound for incorrect answer
+                    const now = ctx.currentTime;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(120.00, now); // Low buzz
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                console.error("Audio playback error:", e);
+            }
+        }
+
+        // Linear Color Interpolation targeting Accessible Contrast Standards
+        // 0% Accuracy -> Crimson Red (#BF1A2F / RGB: 191, 26, 47)
+        // 100% Accuracy -> Deep Royal Blue (#1A56DB / RGB: 26, 86, 219)
+        function updateAccuracyColor(percentage) {
+            if (percentage === null) {
+                accuracyDisplay.innerText = "--";
+                accuracyDisplay.style.color = "#6B7280";
+                return;
+            }
+
+            accuracyDisplay.innerText = `${Math.round(percentage)}%`;
+
+            const ratio = percentage / 100;
+            const r = Math.round(191 + (26 - 191) * ratio);
+            const g = Math.round(26 + (86 - 26) * ratio);
+            const b = Math.round(47 + (219 - 47) * ratio);
+
+            accuracyDisplay.style.color = `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function createBrailleHtml(dotArray) {
+            let htmlStr = '<div class="braille-grid">';
+            dotArray.forEach(isActive => {
+                const activeClass = isActive ? 'dot-active' : 'dot-inactive';
+                htmlStr += `<div class="dot ${activeClass}"></div>`;
+            });
+            htmlStr += '</div>';
+            return htmlStr;
+        }
+
+        function buildReferencePanel() {
+            const displayOrder = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+            referencePanelGrid.innerHTML = "";
+
+            displayOrder.forEach(num => {
+                const cell = document.createElement('div');
+                cell.className = "flex flex-col items-center bg-gray-50 p-2.5 rounded-lg border border-gray-100 w-full max-w-[70px]";
+                cell.innerHTML = `
+                    <span class="text-sm font-bold text-gray-800 mb-2">${num}</span>
+                    ${createBrailleHtml(BRAILLE_MAP[num])}
+                `;
+                referencePanelGrid.appendChild(cell);
+            });
+        }
+
+        function nextChallenge() {
+            const includeZero = includeZeroCheck.checked;
+            let options = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+            if (includeZero) options.push("0");
+
+            let filteredOptions = options.filter(item => item !== activeDigit);
+            if (filteredOptions.length === 0) filteredOptions = options;
+
+            const randomIndex = Math.floor(Math.random() * filteredOptions.length);
+            activeDigit = filteredOptions[randomIndex];
+
+            targetContainer.innerHTML = createBrailleHtml(BRAILLE_MAP[activeDigit]);
+            digitInput.value = "";
+        }
+
+        function updateStats() {
+            correctDisplay.innerText = correctCount;
+            incorrectDisplay.innerText = incorrectCount;
+
+            const total = correctCount + incorrectCount;
+            if (total === 0) {
+                updateAccuracyColor(null);
+            } else {
+                const accuracy = (correctCount / total) * 100;
+                updateAccuracyColor(accuracy);
+            }
+        }
+
+        function triggerFlash(isCorrect) {
+            // Apply a brief responsive background color highlight flash
+            if (isCorrect) {
+                interactiveWindow.style.backgroundColor = "#EFF6FF"; // Soft Blue tint
+            } else {
+                interactiveWindow.style.backgroundColor = "#FEF2F2"; // Soft Red tint
+            }
+
+            // Revert smoothly back to default gray background profile
+            setTimeout(() => {
+                interactiveWindow.style.backgroundColor = "#F9FAFB";
+            }, 180);
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsedSeconds / 60);
+                const seconds = elapsedSeconds % 60;
+                timerDisplay.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function resetTrainer() {
+            correctCount = 0;
+            incorrectCount = 0;
+            updateStats();
+            startTimer();
+            nextChallenge();
+            errorMessage.classList.add('hidden');
+            digitInput.focus();
+        }
+
+        digitInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if (!val) return;
+
+            if (!/^[0-9]$/.test(val)) {
+                errorMessage.innerText = "You must enter a number that matches the displayed Braille symbol.";
+                errorMessage.classList.remove('hidden');
+                e.target.value = "";
+                return;
+            }
+
+            errorMessage.classList.add('hidden');
+
+            const isCorrect = (val === activeDigit);
+            if (isCorrect) {
+                correctCount++;
+            } else {
+                incorrectCount++;
+            }
+
+            playFeedbackSound(isCorrect);
+            triggerFlash(isCorrect);
+            updateStats();
+            nextChallenge();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== includeZeroCheck && e.target !== muteSoundCheck && e.target !== resetBtn && !document.querySelector('details').contains(e.target)) {
+                digitInput.focus();
+            }
+        });
+
+        includeZeroCheck.addEventListener('change', () => {
+            if (!includeZeroCheck.checked && activeDigit === "0") {
+                nextChallenge();
+            }
+            digitInput.focus();
+        });
+
+        resetBtn.addEventListener('click', resetTrainer);
+
+        // Core Initialization Loop
+        buildReferencePanel();
+        resetTrainer();
+    </script>
+</body>
+</html>
