@@ -7,7 +7,7 @@
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231E1E1E'/%3E%3Ccircle cx='65' cy='30' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='65' cy='50' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='65' cy='70' r='11' fill='%23FFFFFF'/%3E%3Ccircle cx='35' cy='70' r='11' fill='%23FFFFFF'/%3E%3C/svg%3E">
 
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.3" integrity="sha384-aJ9rL4k6lF+91guGvUFVSkpIcge7Zd9EiI4TQDLoK9kFaFJgKHgjEXVvG/qA5COj" crossorigin="anonymous"></script>
     <style>
         .braille-grid {
             display: grid;
@@ -100,7 +100,7 @@
                     autofocus
                     autocomplete="off"
                 >
-                <div id="error-message" class="hidden text-sm text-rose-600 text-center mt-2.5 font-medium animate-pulse"></div>
+                <div id="error-message" role="alert" class="hidden text-sm text-rose-600 text-center mt-2.5 font-medium animate-pulse"></div>
             </div>
 
             <button
@@ -157,6 +157,7 @@
         let activeDigit = "";
         let startTime = Date.now();
         let timerInterval = null;
+        let audioCtx = null;
 
         // Elements
         const correctDisplay = document.getElementById('correct-count');
@@ -178,7 +179,9 @@
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
-                const ctx = new AudioContext();
+                if (!audioCtx) audioCtx = new AudioContext();
+                const ctx = audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
 
                 if (isCorrect) {
                     // Crisp arpeggio chime for correct answer
@@ -314,6 +317,7 @@
         function startTimer() {
             clearInterval(timerInterval);
             startTime = Date.now();
+            timerDisplay.innerText = "0:00";
             timerInterval = setInterval(() => {
                 const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
                 const minutes = Math.floor(elapsedSeconds / 60);
