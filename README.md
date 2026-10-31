@@ -152,4 +152,4 @@ This is actually a collection of similar pages, but I don't remember the backsto
 
 * **Year Created:** 2026
 * **Purpose:** To help learn the digits of [Braille](https://en.wikipedia.org/wiki/Braille).
-* **Backstory:** I picked up _[BOMBANANA!](https://store.steampowered.com/app/4656000/BOMBANANA/)_, and the ability to read Braille benefits both the blind monkey and (my specialty) the deaf monkey. This was written by Gemini in a free conversation that lasted minutes.
+* **Backstory:** I picked up _[BOMBANANA!](https://store.steampowered.com/app/4656000/BOMBANANA/)_, and the ability to read Braille benefits both the blind monkey and (my specialty) the deaf monkey. The core functionality was written by Gemini in a free conversation that lasted minutes.
