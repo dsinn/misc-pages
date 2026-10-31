@@ -27,6 +27,36 @@
         .dot-inactive {
             background-color: gainsboro;
         }
+        /* Pattern layout scales with its own width (container query units); the digits are grouped by dot count */
+        .pattern-layout {
+            container-type: inline-size;
+            max-width: 22rem;
+            margin-inline: auto;
+        }
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-auto-rows: 20cqw;
+        }
+        .pattern-card {
+            grid-column-end: span 3;
+            grid-row-end: span 2;
+            align-self: start;
+            height: 37cqw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5cqw;
+            font-size: 4.1cqw;
+        }
+        .pattern-card .braille-grid {
+            gap: 2.35cqw;
+        }
+        .pattern-card .dot {
+            width: 5.9cqw;
+            height: 5.9cqw;
+        }
         details[open] summary svg {
             transform: rotate(180deg);
         }
@@ -113,20 +143,31 @@
 
         <!-- Collapsible Reference Footer -->
         <details class="mt-6 bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden transition-all duration-300 group">
-            <summary class="flex items-center justify-between px-5 py-4 cursor-pointer font-semibold text-gray-700 bg-gray-50/50 hover:bg-gray-50 select-none list-none">
-                <span class="flex items-center space-x-2">
+            <summary class="flex flex-wrap items-center gap-x-3 gap-y-3 px-5 py-4 cursor-pointer font-semibold text-gray-700 bg-gray-50/50 hover:bg-gray-50 select-none list-none">
+                <span class="flex flex-1 items-center space-x-2 order-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                     <span>Braille Digits Reference</span>
                 </span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- Layout toggle lives in the header so the reference body doesn't shift; clicks on the radios don't toggle the details -->
+                <div role="radiogroup" aria-label="Reference layout" class="order-3 basis-full sm:basis-auto sm:order-2 flex bg-gray-100 rounded-lg p-0.5 text-xs font-medium text-gray-500">
+                    <label class="flex-1 sm:flex-none cursor-pointer">
+                        <input type="radio" name="reference-layout" value="pattern" class="peer sr-only" checked>
+                        <span class="block text-center px-3 py-1 rounded-md peer-checked:bg-white peer-checked:text-gray-900 peer-checked:shadow-xs peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500">Pattern</span>
+                    </label>
+                    <label class="flex-1 sm:flex-none cursor-pointer">
+                        <input type="radio" name="reference-layout" value="numeric" class="peer sr-only">
+                        <span class="block text-center px-3 py-1 rounded-md peer-checked:bg-white peer-checked:text-gray-900 peer-checked:shadow-xs peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500">Numeric</span>
+                    </label>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="order-2 sm:order-3 h-4 w-4 text-gray-400 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </summary>
 
-            <div class="p-5 border-t border-gray-100 bg-white grid grid-cols-5 gap-4 justify-items-center">
-                <div id="reference-panel-grid" class="contents"></div>
+            <div class="p-5 border-t border-gray-100 bg-white">
+                <div id="reference-panel-grid"></div>
             </div>
         </details>
     </main>
@@ -259,19 +300,45 @@
             return htmlStr;
         }
 
+        // Pattern layout: [column, row] grid lines per digit, arranged by dot count (1 dot at far left, 4 dots at far right)
+        const PATTERN_POSITIONS = {
+            "1": [1, 2], "2": [1, 4], "3": [1, 6],
+            "9": [7, 1], "0": [5, 3], "8": [9, 3],
+            "4": [5, 5], "6": [9, 5], "5": [7, 7],
+            "7": [13, 4]
+        };
+
         function buildReferencePanel() {
             const displayOrder = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+            const isPattern = document.querySelector('input[name="reference-layout"]:checked').value === 'pattern';
+            referencePanelGrid.className = isPattern ? 'pattern-layout' : '';
             referencePanelGrid.innerHTML = "";
+
+            const grid = document.createElement('div');
+            grid.className = isPattern ? 'pattern-grid' : 'grid grid-cols-5 gap-4 justify-items-center';
 
             displayOrder.forEach(num => {
                 const cell = document.createElement('div');
-                cell.className = "flex flex-col items-center bg-white p-2.5 rounded-lg border border-gray-200 w-full max-w-[70px]";
-                cell.innerHTML = `
-                    <span class="text-sm font-bold text-gray-800 mb-2">${num}</span>
-                    ${createBrailleHtml(BRAILLE_MAP[num])}
-                `;
-                referencePanelGrid.appendChild(cell);
+                if (isPattern) {
+                    const [column, row] = PATTERN_POSITIONS[num];
+                    cell.className = "pattern-card bg-white rounded-lg border border-gray-200";
+                    cell.style.gridColumnStart = column;
+                    cell.style.gridRowStart = row;
+                    cell.innerHTML = `
+                        <span class="font-bold text-gray-800">${num}</span>
+                        ${createBrailleHtml(BRAILLE_MAP[num])}
+                    `;
+                } else {
+                    cell.className = "flex flex-col items-center bg-white p-2.5 rounded-lg border border-gray-200 w-full max-w-[70px]";
+                    cell.innerHTML = `
+                        <span class="text-sm font-bold text-gray-800 mb-2">${num}</span>
+                        ${createBrailleHtml(BRAILLE_MAP[num])}
+                    `;
+                }
+                grid.appendChild(cell);
             });
+
+            referencePanelGrid.appendChild(grid);
         }
 
         function nextChallenge() {
@@ -384,6 +451,10 @@
         });
 
         resetBtn.addEventListener('click', resetTrainer);
+
+        document.querySelectorAll('input[name="reference-layout"]').forEach(radio => {
+            radio.addEventListener('change', buildReferencePanel);
+        });
 
         // Core Initialization Loop
         buildReferencePanel();
