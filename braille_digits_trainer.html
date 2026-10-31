@@ -157,6 +157,8 @@
         let activeDigit = "";
         let startTime = Date.now();
         let timerInterval = null;
+        let lastAnswerTime = 0;
+        const ANSWER_DEBOUNCE_MS = 100; // Fat-finger protection: ignore input right after an answer
         let audioCtx = null;
 
         // Elements
@@ -340,6 +342,11 @@
             const val = e.target.value;
             if (!val) return;
 
+            if (Date.now() - lastAnswerTime < ANSWER_DEBOUNCE_MS) {
+                e.target.value = "";
+                return;
+            }
+
             if (!/^[0-9]$/.test(val)) {
                 errorMessage.innerText = "You must enter a number that matches the displayed Braille symbol.";
                 errorMessage.classList.remove('hidden');
@@ -349,6 +356,7 @@
 
             errorMessage.classList.add('hidden');
 
+            lastAnswerTime = Date.now();
             const isCorrect = (val === activeDigit);
             if (isCorrect) {
                 correctCount++;
